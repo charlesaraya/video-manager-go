@@ -1,0 +1,6 @@
+out
+*.db
+.env
+assets/
+samples/
+.vscode
