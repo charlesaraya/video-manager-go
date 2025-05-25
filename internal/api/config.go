@@ -1,13 +1,18 @@
 package api
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"os"
 
+	"github.com/charlesaraya/video-manager-go/internal/database"
 	"github.com/joho/godotenv"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type ApiConfig struct {
+	DB            *database.Queries
 	Platform      string
 	TokenSecret   string
 	Port          string
@@ -19,6 +24,14 @@ func Load() (*ApiConfig, error) {
 	err := godotenv.Load()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load .env file: %w", err)
+	}
+	dbPath := os.Getenv("DB_PATH")
+	if dbPath == "" {
+		return nil, fmt.Errorf("failed to set DB_PATH environment variable")
+	}
+	db, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		return nil, errors.New("error opening the database")
 	}
 	platform := os.Getenv("PLATFORM")
 	if platform == "" {
@@ -41,6 +54,7 @@ func Load() (*ApiConfig, error) {
 		return nil, fmt.Errorf("failed to set ASSETS_DIR_PATH environment variable")
 	}
 	return &ApiConfig{
+		DB:            database.New(db),
 		Platform:      platform,
 		TokenSecret:   tokenSecret,
 		Port:          port,
