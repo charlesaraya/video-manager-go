@@ -13,5 +13,5 @@ RETURNING *;
 SELECT * FROM users
 WHERE email = ?;
 
--- name: DeleteUsers :exec
+-- name: DeleteAllUsers :exec
 DELETE FROM users;

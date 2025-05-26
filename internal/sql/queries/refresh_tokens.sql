@@ -23,5 +23,5 @@ WHERE token = ?;
 DELETE FROM refresh_tokens
 WHERE token = ?;
 
--- name: DeleteRefreshTokens :exec
+-- name: DeleteAllRefreshTokens :exec
 DELETE FROM refresh_tokens;
