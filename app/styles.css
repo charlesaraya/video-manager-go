@@ -1,6 +1,6 @@
 :root {
     --bg-color: #fffaea;
-    --fg-color: #f5f5f5;
+    --fg-color: #888;
     --subtle-color: #888;
     --primary-color: #000000;
     --input-bg: #ffffff;
@@ -109,19 +109,19 @@ button:hover {
 #video-list li {
     padding: 10px;
     margin-top: 5px;
-    background-color: #1e1e1e;
+    background-color: #fbffe9;
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s ease;
 }
 
 #video-list .active {
-    background-color: var(--primary-color);
-    color: #000;
+    background-color: #e8ff7f;
+    color: var(--primary-color);
 }
 
 #video-list li:hover {
-    background-color: #333;
+    background-color: #f6ffcf;
 }
 
 #thumbnail-image,
@@ -157,7 +157,7 @@ form {
 
 #thumbnail-upload-form,
 #video-container {
-    background-color: #1a1a1a;
+    background-color: #fbffe9;
     padding: 20px;
     border-radius: 5px;
     flex: 1;
