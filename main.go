@@ -31,6 +31,7 @@ func main() {
 	mux.HandleFunc("GET /api/videos/{videoID}", api.GetVideoHandler(cfg))
 	mux.HandleFunc("POST /api/videos", api.AddVideoHandler(cfg))
 	mux.HandleFunc("DELETE /api/videos/{videoID}", api.DeleteVideoHandler(cfg))
+	mux.HandleFunc("UPDATE /api/videos/{videoID}", api.UploadThumbnailHandler(cfg))
 
 	mux.HandleFunc("POST /admin/reset", api.ResetHandler(cfg))
 

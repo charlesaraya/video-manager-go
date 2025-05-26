@@ -2,7 +2,10 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/charlesaraya/video-manager-go/internal/auth"
@@ -132,5 +135,55 @@ func DeleteVideoHandler(cfg *Config) http.HandlerFunc {
 			return
 		}
 		res.WriteHeader(http.StatusNoContent)
+	}
+}
+
+func UploadThumbnailHandler(cfg *Config) http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		videoUUID := req.PathValue("videoID")
+		token, err := auth.GetBearerToken(req.Header)
+		if err != nil {
+			http.Error(res, "failed to extract token", http.StatusUnauthorized)
+			return
+		}
+		_, err = auth.ValidateJWT(token, cfg.TokenSecret)
+		if err != nil {
+			http.Error(res, "failed to authorize request", http.StatusUnauthorized)
+			return
+		}
+		const maxMemory = 10 << 20
+		req.ParseMultipartForm(maxMemory)
+
+		file, header, err := req.FormFile("thumbnail")
+		if err != nil {
+			http.Error(res, "failed to parse form file", http.StatusInternalServerError)
+			return
+		}
+		defer file.Close()
+
+		data, err := io.ReadAll(file)
+		if err != nil {
+			http.Error(res, "failed to read thumbnail file", http.StatusInternalServerError)
+			return
+		}
+		mediaType := header.Header.Get("Content-Type")
+		base64Data := base64.StdEncoding.EncodeToString(data)
+		thumbnailURL := fmt.Sprintf("data:%s;base64,%s", mediaType, base64Data)
+		videoParams := database.UpdateVideoThumbnailParams{
+			ID:           videoUUID,
+			ThumbnailUrl: thumbnailURL,
+		}
+		video, err := cfg.DB.UpdateVideoThumbnail(context.Background(), videoParams)
+		if err != nil {
+			http.Error(res, "failed to update thumbnail file", http.StatusInternalServerError)
+			return
+		}
+		payload, err := json.Marshal(video)
+		if err != nil {
+			http.Error(res, ErrMarshalPayload, http.StatusInternalServerError)
+			return
+		}
+		res.WriteHeader(http.StatusOK)
+		res.Write(payload)
 	}
 }

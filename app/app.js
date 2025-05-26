@@ -130,8 +130,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     setUploadButtonState(true, uploadBtnSelector);
   
     try {
-      const res = await fetch(`/api/thumbnail_upload/${videoID}`, {
-        method: 'POST',
+      const res = await fetch(`/api/videos/${videoID}`, {
+        method: 'UPDATE',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },

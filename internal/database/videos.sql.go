@@ -59,6 +59,8 @@ func (q *Queries) DeleteAllVideos(ctx context.Context) error {
 }
 
 const deleteVideo = `-- name: DeleteVideo :exec
+;
+
 DELETE FROM videos 
 WHERE id = ? AND user_id = ?
 `
@@ -127,4 +129,32 @@ func (q *Queries) GetVideosByUser(ctx context.Context, userID string) ([]Video, 
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateVideoThumbnail = `-- name: UpdateVideoThumbnail :one
+UPDATE videos
+SET thumbnail_url = ?, updated_at = CURRENT_TIMESTAMP
+WHERE id = ?
+RETURNING id, created_at, updated_at, thumbnail_url, video_url, title, description, user_id
+`
+
+type UpdateVideoThumbnailParams struct {
+	ThumbnailUrl string `json:"thumbnail_url"`
+	ID           string `json:"id"`
+}
+
+func (q *Queries) UpdateVideoThumbnail(ctx context.Context, arg UpdateVideoThumbnailParams) (Video, error) {
+	row := q.db.QueryRowContext(ctx, updateVideoThumbnail, arg.ThumbnailUrl, arg.ID)
+	var i Video
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ThumbnailUrl,
+		&i.VideoUrl,
+		&i.Title,
+		&i.Description,
+		&i.UserID,
+	)
+	return i, err
 }

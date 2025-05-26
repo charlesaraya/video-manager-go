@@ -15,6 +15,12 @@ SELECT * FROM videos WHERE user_id = ?;
 -- name: GetVideo :one
 SELECT * FROM videos WHERE id = ?;
 
+-- name: UpdateVideoThumbnail :one
+UPDATE videos
+SET thumbnail_url = ?, updated_at = CURRENT_TIMESTAMP
+WHERE id = ?
+RETURNING * ;
+
 -- name: DeleteVideo :exec
 DELETE FROM videos 
 WHERE id = ? AND user_id = ?;
