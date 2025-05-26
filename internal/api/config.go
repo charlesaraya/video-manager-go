@@ -11,6 +11,10 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+const (
+	AllowedPlatform string = "dev"
+)
+
 type Config struct {
 	DB            *database.Queries
 	Platform      string

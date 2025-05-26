@@ -53,12 +53,12 @@ func (q *Queries) DeleteRefreshToken(ctx context.Context, token string) error {
 	return err
 }
 
-const deleteTokens = `-- name: DeleteTokens :exec
+const deleteRefreshTokens = `-- name: DeleteRefreshTokens :exec
 DELETE FROM refresh_tokens
 `
 
-func (q *Queries) DeleteTokens(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, deleteTokens)
+func (q *Queries) DeleteRefreshTokens(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteRefreshTokens)
 	return err
 }
 

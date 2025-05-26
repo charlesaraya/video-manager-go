@@ -27,6 +27,8 @@ func main() {
 	mux.HandleFunc("POST /api/refresh", api.RefreshTokenHandler(cfg))
 	mux.HandleFunc("POST /api/revoke", api.RevokeTokenHandler(cfg))
 
+	mux.HandleFunc("POST /admin/reset", api.ResetHandler(cfg))
+
 	// 3. Start server
 	log.Printf("Serving: http://localhost:%s/\n", cfg.Port)
 	server.ListenAndServe()
