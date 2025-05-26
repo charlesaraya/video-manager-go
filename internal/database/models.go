@@ -25,3 +25,14 @@ type User struct {
 	Email     string    `json:"email"`
 	Password  string    `json:"password"`
 }
+
+type Video struct {
+	ID           string    `json:"id"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	ThumbnailUrl string    `json:"thumbnail_url"`
+	VideoUrl     string    `json:"video_url"`
+	Title        string    `json:"title"`
+	Description  string    `json:"description"`
+	UserID       string    `json:"user_id"`
+}
