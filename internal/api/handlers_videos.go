@@ -110,3 +110,27 @@ func GetAllVideosHandler(cfg *Config) http.HandlerFunc {
 		res.Write(data)
 	}
 }
+
+func DeleteVideoHandler(cfg *Config) http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		token, err := auth.GetBearerToken(req.Header)
+		if err != nil {
+			http.Error(res, "failed to extract token", http.StatusBadRequest)
+			return
+		}
+		userUUID, err := auth.ValidateJWT(token, cfg.TokenSecret)
+		if err != nil {
+			http.Error(res, "failed to authorize request", http.StatusUnauthorized)
+			return
+		}
+		deleteParams := database.DeleteVideoParams{
+			ID:     req.PathValue("videoID"),
+			UserID: userUUID.String(),
+		}
+		if err := cfg.DB.DeleteVideo(context.Background(), deleteParams); err != nil {
+			http.Error(res, "failed to delete video", http.StatusInternalServerError)
+			return
+		}
+		res.WriteHeader(http.StatusNoContent)
+	}
+}

@@ -15,9 +15,9 @@ SELECT * FROM videos WHERE user_id = ?;
 -- name: GetVideo :one
 SELECT * FROM videos WHERE id = ?;
 
-
 -- name: DeleteVideo :exec
-DELETE FROM videos WHERE id = ?;
+DELETE FROM videos 
+WHERE id = ? AND user_id = ?;
 
 -- name: DeleteAllVideos :exec
 DELETE FROM videos;

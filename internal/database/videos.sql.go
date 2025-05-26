@@ -59,11 +59,17 @@ func (q *Queries) DeleteAllVideos(ctx context.Context) error {
 }
 
 const deleteVideo = `-- name: DeleteVideo :exec
-DELETE FROM videos WHERE id = ?
+DELETE FROM videos 
+WHERE id = ? AND user_id = ?
 `
 
-func (q *Queries) DeleteVideo(ctx context.Context, id string) error {
-	_, err := q.db.ExecContext(ctx, deleteVideo, id)
+type DeleteVideoParams struct {
+	ID     string `json:"id"`
+	UserID string `json:"user_id"`
+}
+
+func (q *Queries) DeleteVideo(ctx context.Context, arg DeleteVideoParams) error {
+	_, err := q.db.ExecContext(ctx, deleteVideo, arg.ID, arg.UserID)
 	return err
 }
 
