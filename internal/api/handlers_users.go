@@ -33,7 +33,7 @@ type tokenPayload struct {
 	Token string `json:"token"`
 }
 
-func CreateUserHandler(cfg *ApiConfig) http.HandlerFunc {
+func CreateUserHandler(cfg *Config) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		params := loginPayload{}
 		decoder := json.NewDecoder(req.Body)
@@ -76,7 +76,7 @@ func CreateUserHandler(cfg *ApiConfig) http.HandlerFunc {
 	}
 }
 
-func LoginHandler(cfg *ApiConfig) http.HandlerFunc {
+func LoginHandler(cfg *Config) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		params := loginPayload{}
 		decoder := json.NewDecoder(req.Body)
@@ -133,7 +133,7 @@ func LoginHandler(cfg *ApiConfig) http.HandlerFunc {
 	}
 }
 
-func RefreshTokenHandler(cfg *ApiConfig) http.HandlerFunc {
+func RefreshTokenHandler(cfg *Config) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		token, err := auth.GetBearerToken(req.Header)
 		if err != nil {
@@ -167,7 +167,7 @@ func RefreshTokenHandler(cfg *ApiConfig) http.HandlerFunc {
 	}
 }
 
-func RevokeTokenHandler(cfg *ApiConfig) http.HandlerFunc {
+func RevokeTokenHandler(cfg *Config) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		token, err := auth.GetBearerToken(req.Header)
 		if err != nil {

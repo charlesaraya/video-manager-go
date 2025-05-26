@@ -11,7 +11,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type ApiConfig struct {
+type Config struct {
 	DB            *database.Queries
 	Platform      string
 	TokenSecret   string
@@ -20,7 +20,7 @@ type ApiConfig struct {
 	AppDirPath    string
 }
 
-func Load() (*ApiConfig, error) {
+func Load() (*Config, error) {
 	err := godotenv.Load()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load .env file: %w", err)
@@ -53,7 +53,7 @@ func Load() (*ApiConfig, error) {
 	if tokenSecret == "" {
 		return nil, fmt.Errorf("failed to set ASSETS_DIR_PATH environment variable")
 	}
-	return &ApiConfig{
+	return &Config{
 		DB:            database.New(db),
 		Platform:      platform,
 		TokenSecret:   tokenSecret,
