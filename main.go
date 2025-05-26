@@ -23,6 +23,8 @@ func main() {
 	mux.Handle("/", api.AppHandler(apiCfg))
 	mux.HandleFunc("POST /api/users", api.CreateUserHandler(apiCfg))
 	mux.HandleFunc("POST /api/login", api.LoginHandler(apiCfg))
+	mux.HandleFunc("POST /api/refresh", api.RefreshTokenHandler(apiCfg))
+	mux.HandleFunc("POST /api/revoke", api.RevokeTokenHandler(apiCfg))
 
 	// 3. Start server
 	log.Printf("Serving: http://localhost:%s/\n", apiCfg.Port)

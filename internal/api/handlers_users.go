@@ -13,6 +13,7 @@ import (
 const (
 	ErrDecodeRequestBody    string        = "failed to decode request body"
 	ErrMarshalPayload       string        = "failed to marshal payload"
+	ErrMakeJWT              string        = "failed to make access JWT"
 	MaxSessionDuration      time.Duration = time.Hour * 24
 	MaxRefreshTokenDuration time.Duration = time.Hour * 24 * 60
 )
@@ -26,6 +27,10 @@ type userPayload struct {
 	User         database.User
 	Token        string `json:"token"`
 	RefreshToken string `json:"refresh_token"`
+}
+
+type tokenPayload struct {
+	Token string `json:"token"`
 }
 
 func CreateUserHandler(cfg *ApiConfig) http.HandlerFunc {
@@ -95,7 +100,7 @@ func LoginHandler(cfg *ApiConfig) http.HandlerFunc {
 		}
 		jwt, err := auth.MakeJWT(userUUID, cfg.TokenSecret, MaxSessionDuration)
 		if err != nil {
-			http.Error(res, "failed to create access JWT", http.StatusInternalServerError)
+			http.Error(res, ErrMakeJWT, http.StatusInternalServerError)
 			return
 		}
 		refreshToken, err := auth.MakeRefreshToken()
@@ -125,5 +130,54 @@ func LoginHandler(cfg *ApiConfig) http.HandlerFunc {
 		}
 		res.Header().Set("Content-Type", "application/json")
 		res.Write(data)
+	}
+}
+
+func RefreshTokenHandler(cfg *ApiConfig) http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		token, err := auth.GetBearerToken(req.Header)
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusBadRequest)
+			return
+		}
+		refreshToken, err := cfg.DB.GetRefreshToken(req.Context(), token)
+		if err != nil || refreshToken.ExpiresAt.Before(time.Now()) || refreshToken.RevokedAt.Valid {
+			http.Error(res, "failed to get refresh token", http.StatusUnauthorized)
+			return
+		}
+		userUUID, err := uuid.Parse(refreshToken.UserID)
+		if err != nil {
+			http.Error(res, "failed to parse uuid", http.StatusInternalServerError)
+			return
+		}
+		jwt, err := auth.MakeJWT(userUUID, cfg.TokenSecret, MaxSessionDuration)
+		if err != nil {
+			http.Error(res, ErrMakeJWT, http.StatusUnauthorized)
+			return
+		}
+		payload := tokenPayload{
+			Token: jwt,
+		}
+		data, err := json.Marshal(payload)
+		if err != nil {
+			http.Error(res, ErrMarshalPayload, http.StatusInternalServerError)
+		}
+		res.Header().Set("Content-Type", "application/json")
+		res.Write(data)
+	}
+}
+
+func RevokeTokenHandler(cfg *ApiConfig) http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		token, err := auth.GetBearerToken(req.Header)
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if err = cfg.DB.RevokeRefreshToken(req.Context(), token); err != nil {
+			http.Error(res, "failed to revoke refresh token", http.StatusInternalServerError)
+			return
+		}
+		res.WriteHeader(http.StatusNoContent)
 	}
 }
