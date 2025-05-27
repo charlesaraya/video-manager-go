@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -163,7 +164,15 @@ func UploadThumbnailHandler(cfg *Config) http.HandlerFunc {
 		}
 		defer file.Close()
 
-		mediaType := header.Header.Get("Content-Type")
+		mediaType, _, err := mime.ParseMediaType(header.Header.Get("Content-Type"))
+		if err != nil {
+			http.Error(res, "failed to parse media", http.StatusInternalServerError)
+			return
+		}
+		if mediaType != MimeTypeImageJPEG && mediaType != MimeTypeImagePNG {
+			http.Error(res, "invalid media type", http.StatusInternalServerError)
+			return
+		}
 		mediaTypeSplit := strings.Split(mediaType, "/")
 		thumbnailURL := filepath.Join(cfg.AssetsDirPath, fmt.Sprintf("%s.%s", videoUUID, mediaTypeSplit[1]))
 		thumbnailFile, err := os.Create(thumbnailURL)

@@ -12,7 +12,12 @@ import (
 )
 
 const (
-	AllowedPlatform string = "dev"
+	AllowedPlatform   string = "dev"
+	MimeTypeImagePNG  string = "image/png"
+	MimeTypeImageJPEG string = "image/png"
+	MimeTypeVideo     string = "video/mp4"
+	MimeTypeAudio     string = "audio/mp3"
+	MimeTypeText      string = "text/html"
 )
 
 type Config struct {
