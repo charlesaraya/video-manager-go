@@ -2,11 +2,13 @@ package api
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/charlesaraya/video-manager-go/internal/auth"
 	"github.com/charlesaraya/video-manager-go/internal/database"
@@ -161,17 +163,22 @@ func UploadThumbnailHandler(cfg *Config) http.HandlerFunc {
 		}
 		defer file.Close()
 
-		data, err := io.ReadAll(file)
+		mediaType := header.Header.Get("Content-Type")
+		mediaTypeSplit := strings.Split(mediaType, "/")
+		thumbnailURL := filepath.Join(cfg.AssetsDirPath, fmt.Sprintf("%s.%s", videoUUID, mediaTypeSplit[1]))
+		thumbnailFile, err := os.Create(thumbnailURL)
 		if err != nil {
-			http.Error(res, "failed to read thumbnail file", http.StatusInternalServerError)
+			http.Error(res, "failed to create thumbnail file", http.StatusInternalServerError)
 			return
 		}
-		mediaType := header.Header.Get("Content-Type")
-		base64Data := base64.StdEncoding.EncodeToString(data)
-		thumbnailURL := fmt.Sprintf("data:%s;base64,%s", mediaType, base64Data)
+		_, err = io.Copy(thumbnailFile, file)
+		if err != nil {
+			http.Error(res, "failed to copy thumbnail file", http.StatusInternalServerError)
+			return
+		}
 		videoParams := database.UpdateVideoThumbnailParams{
 			ID:           videoUUID,
-			ThumbnailUrl: thumbnailURL,
+			ThumbnailUrl: "/" + thumbnailURL,
 		}
 		video, err := cfg.DB.UpdateVideoThumbnail(context.Background(), videoParams)
 		if err != nil {
