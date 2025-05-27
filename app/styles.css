@@ -17,6 +17,10 @@ body {
     line-height: 1.6;
 }
 
+input {
+    font-family: monospace;
+}
+
 .nav-bar {
     display: flex;
     justify-content: space-between;
