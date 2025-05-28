@@ -21,6 +21,12 @@ SET thumbnail_url = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ?
 RETURNING * ;
 
+-- name: UpdateVideoUrl :one
+UPDATE videos
+SET video_url = ?, updated_at = CURRENT_TIMESTAMP
+WHERE id = ?
+RETURNING * ;
+
 -- name: DeleteVideo :exec
 DELETE FROM videos 
 WHERE id = ? AND user_id = ?;

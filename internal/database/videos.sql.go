@@ -158,3 +158,33 @@ func (q *Queries) UpdateVideoThumbnail(ctx context.Context, arg UpdateVideoThumb
 	)
 	return i, err
 }
+
+const updateVideoUrl = `-- name: UpdateVideoUrl :one
+;
+
+UPDATE videos
+SET video_url = ?, updated_at = CURRENT_TIMESTAMP
+WHERE id = ?
+RETURNING id, created_at, updated_at, thumbnail_url, video_url, title, description, user_id
+`
+
+type UpdateVideoUrlParams struct {
+	VideoUrl string `json:"video_url"`
+	ID       string `json:"id"`
+}
+
+func (q *Queries) UpdateVideoUrl(ctx context.Context, arg UpdateVideoUrlParams) (Video, error) {
+	row := q.db.QueryRowContext(ctx, updateVideoUrl, arg.VideoUrl, arg.ID)
+	var i Video
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ThumbnailUrl,
+		&i.VideoUrl,
+		&i.Title,
+		&i.Description,
+		&i.UserID,
+	)
+	return i, err
+}
