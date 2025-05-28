@@ -174,8 +174,9 @@ func UploadThumbnailHandler(cfg *Config) http.HandlerFunc {
 			return
 		}
 		mediaTypeSplit := strings.Split(mediaType, "/")
-		thumbnailURL := filepath.Join(cfg.AssetsDirPath, fmt.Sprintf("%s.%s", videoUUID, mediaTypeSplit[1]))
-		thumbnailFile, err := os.Create(thumbnailURL)
+		fileName := fmt.Sprintf("%s.%s", videoUUID, mediaTypeSplit[1])
+		filePath := filepath.Join(cfg.AssetsDirPath, fileName)
+		thumbnailFile, err := os.Create(filePath)
 		if err != nil {
 			Error(res, "failed to create thumbnail file", http.StatusInternalServerError)
 			return
@@ -187,7 +188,7 @@ func UploadThumbnailHandler(cfg *Config) http.HandlerFunc {
 		}
 		videoParams := database.UpdateVideoThumbnailParams{
 			ID:           videoUUID,
-			ThumbnailUrl: "/" + thumbnailURL,
+			ThumbnailUrl: cfg.AssetsBrowserURL + fileName,
 		}
 		video, err := cfg.DB.UpdateVideoThumbnail(context.Background(), videoParams)
 		if err != nil {

@@ -21,12 +21,13 @@ const (
 )
 
 type Config struct {
-	DB            *database.Queries
-	Platform      string
-	TokenSecret   string
-	Port          string
-	AssetsDirPath string
-	AppDirPath    string
+	DB               *database.Queries
+	Platform         string
+	TokenSecret      string
+	Port             string
+	AssetsDirPath    string
+	AssetsBrowserURL string
+	AppDirPath       string
 }
 
 func Load() (*Config, error) {
@@ -62,12 +63,17 @@ func Load() (*Config, error) {
 	if tokenSecret == "" {
 		return nil, fmt.Errorf("failed to set ASSETS_DIR_PATH environment variable")
 	}
+	assetsBrowserURL := os.Getenv("ASSETS_BROWSER_URL")
+	if tokenSecret == "" {
+		return nil, fmt.Errorf("failed to set ASSETS_DIR_PATH environment variable")
+	}
 	return &Config{
-		DB:            database.New(db),
-		Platform:      platform,
-		TokenSecret:   tokenSecret,
-		Port:          port,
-		AppDirPath:    appDirPath,
-		AssetsDirPath: assetsDirPath,
+		DB:               database.New(db),
+		Platform:         platform,
+		TokenSecret:      tokenSecret,
+		Port:             port,
+		AppDirPath:       appDirPath,
+		AssetsBrowserURL: assetsBrowserURL,
+		AssetsDirPath:    assetsDirPath,
 	}, nil
 }

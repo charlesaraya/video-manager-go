@@ -23,7 +23,7 @@ func main() {
 	mux.Handle("/", api.AppHandler(cfg))
 
 	assetsHandler := http.StripPrefix("/assets", http.FileServer(http.Dir(cfg.AssetsDirPath)))
-	mux.Handle("/assets/", api.CacheMiddleware(assetsHandler))
+	mux.Handle(cfg.AssetsBrowserURL, api.CacheMiddleware(assetsHandler))
 
 	mux.HandleFunc("POST /api/users", api.CreateUserHandler(cfg))
 	mux.HandleFunc("POST /api/login", api.LoginHandler(cfg))
