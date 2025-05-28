@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/base64"
@@ -10,6 +11,7 @@ import (
 	"mime"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -282,6 +284,19 @@ func UploadVideosHandler(cfg *Config) http.HandlerFunc {
 		fileTag := base64.RawURLEncoding.EncodeToString(key)
 		mediaTypeSplit := strings.Split(mediaType, "/")
 		fileKeyName := fmt.Sprintf("%s.%s", fileTag, mediaTypeSplit[1])
+		aspectRatio, err := getVideoAspectRatio(tempFile.Name())
+		if err != nil {
+			Error(res, "failed to get video aspect ratio", http.StatusInternalServerError)
+			return
+		}
+		prefix := "other"
+		switch aspectRatio {
+		case "16:9":
+			prefix = "landscape"
+		case "9:16":
+			prefix = "portrait"
+		}
+		fileKeyName = filepath.Join(prefix, fileKeyName)
 		putObjectInputParams := s3.PutObjectInput{
 			Bucket:      &cfg.S3BucketName,
 			Key:         &fileKeyName,
@@ -294,6 +309,7 @@ func UploadVideosHandler(cfg *Config) http.HandlerFunc {
 			return
 		}
 		videoURL := "https://" + cfg.S3BucketName + ".s3." + cfg.S3BucketRegion + ".amazonaws.com/" + fileKeyName
+		fmt.Print(aspectRatio)
 		videoParams := database.UpdateVideoUrlParams{
 			ID:       videoUUID,
 			VideoUrl: videoURL,
@@ -311,4 +327,29 @@ func UploadVideosHandler(cfg *Config) http.HandlerFunc {
 		res.WriteHeader(http.StatusOK)
 		res.Write(payload)
 	}
+}
+
+func getVideoAspectRatio(filepath string) (string, error) {
+	args := []string{"-v", "error", "-print_format", "json", "-show_streams", filepath}
+	// Prep command
+	cmd := exec.Command("ffprobe", args...)
+	// Prep buffer to capture stdout
+	buff := bytes.Buffer{}
+	cmd.Stdout = &buff
+	// Run command
+	err := cmd.Run()
+	if err != nil {
+		return "", err
+	}
+	// Unmarshal JSON
+	var dim struct {
+		Stream []struct {
+			AspectRatio string `json:"display_aspect_ratio"`
+		} `json:"streams"`
+	}
+	err = json.Unmarshal(buff.Bytes(), &dim)
+	if err != nil {
+		return "", err
+	}
+	return dim.Stream[0].AspectRatio, nil
 }
