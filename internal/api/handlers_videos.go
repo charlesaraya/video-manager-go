@@ -296,6 +296,16 @@ func UploadVideosHandler(cfg *Config) http.HandlerFunc {
 		case "9:16":
 			prefix = "portrait"
 		}
+		tempFileName, err := processVideoForFastStart(tempFile.Name())
+		if err != nil {
+			Error(res, "failed to process video for fast start", http.StatusInternalServerError)
+			return
+		}
+		tempFile, err = os.Open(tempFileName)
+		if err != nil {
+			Error(res, "failed to open preprocessed temp file", http.StatusInternalServerError)
+			return
+		}
 		fileKeyName = filepath.Join(prefix, fileKeyName)
 		putObjectInputParams := s3.PutObjectInput{
 			Bucket:      &cfg.S3BucketName,
@@ -309,7 +319,6 @@ func UploadVideosHandler(cfg *Config) http.HandlerFunc {
 			return
 		}
 		videoURL := "https://" + cfg.S3BucketName + ".s3." + cfg.S3BucketRegion + ".amazonaws.com/" + fileKeyName
-		fmt.Print(aspectRatio)
 		videoParams := database.UpdateVideoUrlParams{
 			ID:       videoUUID,
 			VideoUrl: videoURL,
@@ -352,4 +361,20 @@ func getVideoAspectRatio(filepath string) (string, error) {
 		return "", err
 	}
 	return dim.Stream[0].AspectRatio, nil
+}
+
+func processVideoForFastStart(filepath string) (string, error) {
+	output_filepath := filepath + ".preprocessing"
+	args := []string{"-i", filepath, "-c", "copy", "-movflags", "faststart", "-f", "mp4", output_filepath}
+	// Prep command
+	cmd := exec.Command("ffmpeg", args...)
+	// Prep buffer to capture stdout
+	buff := bytes.Buffer{}
+	cmd.Stdout = &buff
+	// Run command
+	err := cmd.Run()
+	if err != nil {
+		return "", err
+	}
+	return output_filepath, nil
 }
