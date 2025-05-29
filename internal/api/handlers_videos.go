@@ -79,6 +79,13 @@ func GetVideoHandler(cfg *Config) http.HandlerFunc {
 			Error(res, "failed to get video", http.StatusInternalServerError)
 			return
 		}
+		if video.VideoUrl != "" {
+			video, err = cfg.dbVideoToSignedVideo(video)
+			if err != nil {
+				Error(res, "failed to sign video", http.StatusInternalServerError)
+				return
+			}
+		}
 		data, err := json.Marshal(video)
 		if err != nil {
 			Error(res, ErrMarshalPayload, http.StatusInternalServerError)
@@ -106,6 +113,15 @@ func GetAllVideosHandler(cfg *Config) http.HandlerFunc {
 		if err != nil {
 			Error(res, "failed to get videos", http.StatusInternalServerError)
 			return
+		}
+		for i, video := range videos {
+			if video.VideoUrl != "" {
+				videos[i], err = cfg.dbVideoToSignedVideo(video)
+				if err != nil {
+					Error(res, "failed to sign video", http.StatusInternalServerError)
+					return
+				}
+			}
 		}
 		videosPayload := []database.Video{}
 		if len(videos) != 0 {
@@ -279,11 +295,6 @@ func UploadVideosHandler(cfg *Config) http.HandlerFunc {
 			Error(res, "failed to reset read offset to beginning of file", http.StatusInternalServerError)
 			return
 		}
-		key := make([]byte, 32)
-		rand.Read(key)
-		fileTag := base64.RawURLEncoding.EncodeToString(key)
-		mediaTypeSplit := strings.Split(mediaType, "/")
-		fileKeyName := fmt.Sprintf("%s.%s", fileTag, mediaTypeSplit[1])
 		aspectRatio, err := getVideoAspectRatio(tempFile.Name())
 		if err != nil {
 			Error(res, "failed to get video aspect ratio", http.StatusInternalServerError)
@@ -306,7 +317,11 @@ func UploadVideosHandler(cfg *Config) http.HandlerFunc {
 			Error(res, "failed to open preprocessed temp file", http.StatusInternalServerError)
 			return
 		}
-		fileKeyName = filepath.Join(prefix, fileKeyName)
+		key := make([]byte, 32)
+		rand.Read(key)
+		fileTag := base64.RawURLEncoding.EncodeToString(key)
+		mediaTypeSplit := strings.Split(mediaType, "/")
+		fileKeyName := fmt.Sprintf("%s/%s.%s", prefix, fileTag, mediaTypeSplit[1])
 		putObjectInputParams := s3.PutObjectInput{
 			Bucket:      &cfg.S3BucketName,
 			Key:         &fileKeyName,
@@ -318,7 +333,8 @@ func UploadVideosHandler(cfg *Config) http.HandlerFunc {
 			Error(res, "failed to put the object into s3", http.StatusInternalServerError)
 			return
 		}
-		videoURL := "https://" + cfg.S3BucketName + ".s3." + cfg.S3BucketRegion + ".amazonaws.com/" + fileKeyName
+		//videoURL := "https://" + cfg.S3BucketName + ".s3." + cfg.S3BucketRegion + ".amazonaws.com/" + fileKeyName
+		videoURL := fileKeyName
 		videoParams := database.UpdateVideoUrlParams{
 			ID:       videoUUID,
 			VideoUrl: videoURL,
@@ -326,6 +342,11 @@ func UploadVideosHandler(cfg *Config) http.HandlerFunc {
 		video, err = cfg.DB.UpdateVideoUrl(context.Background(), videoParams)
 		if err != nil {
 			Error(res, "failed to upload video url", http.StatusInternalServerError)
+			return
+		}
+		video, err = cfg.dbVideoToSignedVideo(video)
+		if err != nil {
+			Error(res, "failed to generate sign video", http.StatusInternalServerError)
 			return
 		}
 		payload, err := json.Marshal(video)
