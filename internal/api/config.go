@@ -58,19 +58,19 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("failed to set TOKEN_SECRET environment variable")
 	}
 	port := os.Getenv("PORT")
-	if tokenSecret == "" {
+	if port == "" {
 		return nil, fmt.Errorf("failed to set PORT environment variable")
 	}
 	appDirPath := os.Getenv("APP_DIR_PATH")
-	if tokenSecret == "" {
+	if appDirPath == "" {
 		return nil, fmt.Errorf("failed to set APP_DIR_PATH environment variable")
 	}
 	assetsDirPath := os.Getenv("ASSETS_DIR_PATH")
-	if tokenSecret == "" {
+	if assetsDirPath == "" {
 		return nil, fmt.Errorf("failed to set ASSETS_DIR_PATH environment variable")
 	}
 	assetsBrowserURL := os.Getenv("ASSETS_BROWSER_URL")
-	if tokenSecret == "" {
+	if assetsBrowserURL == "" {
 		return nil, fmt.Errorf("failed to set ASSETS_DIR_PATH environment variable")
 	}
 	s3BucketName := os.Getenv("S3_BUCKET_NAME")
