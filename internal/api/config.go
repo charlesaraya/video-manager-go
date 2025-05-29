@@ -38,7 +38,7 @@ type Config struct {
 	S3Client             *s3.Client
 }
 
-func Load() (*Config, error) {
+func LoadConfig() (*Config, error) {
 	err := godotenv.Load()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load .env file: %w", err)

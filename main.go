@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	cfg, err := api.Load()
+	cfg, err := api.LoadConfig()
 	if err != nil {
 		log.Fatal(fmt.Errorf("error loading api config: %w", err))
 	}
