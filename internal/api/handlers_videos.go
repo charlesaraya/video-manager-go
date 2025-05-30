@@ -79,13 +79,6 @@ func GetVideoHandler(cfg *Config) http.HandlerFunc {
 			Error(res, "failed to get video", http.StatusInternalServerError)
 			return
 		}
-		if video.VideoUrl != "" {
-			video, err = cfg.dbVideoToSignedVideo(video)
-			if err != nil {
-				Error(res, "failed to sign video", http.StatusInternalServerError)
-				return
-			}
-		}
 		data, err := json.Marshal(video)
 		if err != nil {
 			Error(res, ErrMarshalPayload, http.StatusInternalServerError)
@@ -113,15 +106,6 @@ func GetAllVideosHandler(cfg *Config) http.HandlerFunc {
 		if err != nil {
 			Error(res, "failed to get videos", http.StatusInternalServerError)
 			return
-		}
-		for i, video := range videos {
-			if video.VideoUrl != "" {
-				videos[i], err = cfg.dbVideoToSignedVideo(video)
-				if err != nil {
-					Error(res, "failed to sign video", http.StatusInternalServerError)
-					return
-				}
-			}
 		}
 		videosPayload := []database.Video{}
 		if len(videos) != 0 {
@@ -333,8 +317,7 @@ func UploadVideosHandler(cfg *Config) http.HandlerFunc {
 			Error(res, "failed to put the object into s3", http.StatusInternalServerError)
 			return
 		}
-		//videoURL := "https://" + cfg.S3BucketName + ".s3." + cfg.S3BucketRegion + ".amazonaws.com/" + fileKeyName
-		videoURL := fileKeyName
+		videoURL := fmt.Sprintf("%s/%s", cfg.S3CfDistribution, fileKeyName)
 		videoParams := database.UpdateVideoUrlParams{
 			ID:       videoUUID,
 			VideoUrl: videoURL,
@@ -342,11 +325,6 @@ func UploadVideosHandler(cfg *Config) http.HandlerFunc {
 		video, err = cfg.DB.UpdateVideoUrl(context.Background(), videoParams)
 		if err != nil {
 			Error(res, "failed to upload video url", http.StatusInternalServerError)
-			return
-		}
-		video, err = cfg.dbVideoToSignedVideo(video)
-		if err != nil {
-			Error(res, "failed to generate sign video", http.StatusInternalServerError)
 			return
 		}
 		payload, err := json.Marshal(video)

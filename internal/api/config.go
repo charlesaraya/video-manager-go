@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -35,6 +34,7 @@ type Config struct {
 	S3BucketName         string
 	S3BucketRegion       string
 	S3URLExpirationLimit string
+	S3CfDistribution     string
 	S3Client             *s3.Client
 }
 
@@ -83,8 +83,12 @@ func LoadConfig() (*Config, error) {
 	if s3BucketRegion == "" {
 		return nil, fmt.Errorf("failed to set S3_BUCKET_REGION environment variable")
 	}
+	s3CfDistribution := os.Getenv("S3_CF_DISTRIBUTION")
+	if s3CfDistribution == "" {
+		return nil, fmt.Errorf("failed to set S3_CF_DISTRIBUTION environment variable")
+	}
 	s3URLExpirationLimit := os.Getenv("S3_URL_EXPIRATION_LIMIT")
-	if s3BucketRegion == "" {
+	if s3URLExpirationLimit == "" {
 		return nil, fmt.Errorf("failed to set S3_URL_EXPIRATION_LIMIT environment variable")
 	}
 	awsSDKConfig, err := config.LoadDefaultConfig(context.Background())
@@ -102,33 +106,7 @@ func LoadConfig() (*Config, error) {
 		S3BucketName:         s3BucketName,
 		S3BucketRegion:       s3BucketRegion,
 		S3URLExpirationLimit: s3URLExpirationLimit,
+		S3CfDistribution:     s3CfDistribution,
 		S3Client:             s3.NewFromConfig(awsSDKConfig),
 	}, nil
-}
-
-func (cfg *Config) dbVideoToSignedVideo(video database.Video) (database.Video, error) {
-	expireTime, err := time.ParseDuration(cfg.S3URLExpirationLimit)
-	if err != nil {
-		return database.Video{}, err
-	}
-	signedURL, err := generatePresignedURL(cfg.S3Client, cfg.S3BucketName, video.VideoUrl, expireTime)
-	if err != nil {
-		return database.Video{}, err
-	}
-	video.VideoUrl = signedURL
-	return video, nil
-}
-
-func generatePresignedURL(s3Client *s3.Client, bucket, key string, expireTime time.Duration) (string, error) {
-	presignedClient := s3.NewPresignClient(s3Client)
-	presignOptions := s3.WithPresignExpires(expireTime)
-	getObjectInput := s3.GetObjectInput{
-		Bucket: &bucket,
-		Key:    &key,
-	}
-	presignedHTTPRequest, err := presignedClient.PresignGetObject(context.Background(), &getObjectInput, presignOptions)
-	if err != nil {
-		return "", err
-	}
-	return presignedHTTPRequest.URL, nil
 }
