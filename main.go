@@ -30,12 +30,12 @@ func main() {
 	mux.HandleFunc("POST /api/refresh", api.RefreshTokenHandler(cfg))
 	mux.HandleFunc("POST /api/revoke", api.RevokeTokenHandler(cfg))
 
-	mux.HandleFunc("GET /api/videos", api.GetAllVideosHandler(cfg))
-	mux.HandleFunc("GET /api/videos/{videoID}", api.GetVideoHandler(cfg))
-	mux.HandleFunc("POST /api/videos", api.AddVideoHandler(cfg))
-	mux.HandleFunc("DELETE /api/videos/{videoID}", api.DeleteVideoHandler(cfg))
-	mux.HandleFunc("UPDATE /api/videos/{videoID}", api.UploadThumbnailHandler(cfg))
-	mux.HandleFunc("POST /api/video_upload/{videoID}", api.UploadVideosHandler(cfg))
+	mux.HandleFunc("GET /api/videos", api.AuthMiddleware(cfg, api.GetAllVideosHandler))
+	mux.HandleFunc("GET /api/videos/{videoID}", api.AuthMiddleware(cfg, api.GetVideoHandler))
+	mux.HandleFunc("POST /api/videos", api.AuthMiddleware(cfg, api.AddVideoHandler))
+	mux.HandleFunc("DELETE /api/videos/{videoID}", api.AuthMiddleware(cfg, api.DeleteVideoHandler))
+	mux.HandleFunc("UPDATE /api/videos/{videoID}", api.AuthMiddleware(cfg, api.UploadThumbnailHandler))
+	mux.HandleFunc("POST /api/video_upload/{videoID}", api.AuthMiddleware(cfg, api.UploadVideosHandler))
 
 	mux.HandleFunc("POST /admin/reset", api.ResetHandler(cfg))
 

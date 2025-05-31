@@ -16,23 +16,12 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/charlesaraya/video-manager-go/internal/auth"
 	"github.com/charlesaraya/video-manager-go/internal/database"
 	"github.com/google/uuid"
 )
 
-func AddVideoHandler(cfg *Config) http.HandlerFunc {
+func AddVideoHandler(cfg *Config, userUUID uuid.UUID) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		jwt, err := auth.GetBearerToken(req.Header)
-		if err != nil {
-			Error(res, err.Error(), http.StatusBadRequest)
-			return
-		}
-		userUUID, err := auth.ValidateJWT(jwt, cfg.TokenSecret)
-		if err != nil {
-			Error(res, "failed to validate access jwt", http.StatusUnauthorized)
-			return
-		}
 		videoParams := database.CreateVideoParams{}
 		decoder := json.NewDecoder(req.Body)
 		if err := decoder.Decode(&videoParams); err != nil {
@@ -57,18 +46,9 @@ func AddVideoHandler(cfg *Config) http.HandlerFunc {
 	}
 }
 
-func GetVideoHandler(cfg *Config) http.HandlerFunc {
+func GetVideoHandler(cfg *Config, userUUID uuid.UUID) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		jwt, err := auth.GetBearerToken(req.Header)
-		if err != nil {
-			Error(res, err.Error(), http.StatusBadRequest)
-			return
-		}
-		_, err = auth.ValidateJWT(jwt, cfg.TokenSecret)
-		if err != nil {
-			Error(res, "failed to validate access jwt", http.StatusUnauthorized)
-			return
-		}
+		fmt.Printf("UserUUID: %s", userUUID)
 		videoUUID, err := uuid.Parse(req.PathValue("videoID"))
 		if err != nil {
 			Error(res, "failed to parse video ID", http.StatusInternalServerError)
@@ -90,18 +70,8 @@ func GetVideoHandler(cfg *Config) http.HandlerFunc {
 	}
 }
 
-func GetAllVideosHandler(cfg *Config) http.HandlerFunc {
+func GetAllVideosHandler(cfg *Config, userUUID uuid.UUID) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		jwt, err := auth.GetBearerToken(req.Header)
-		if err != nil {
-			Error(res, err.Error(), http.StatusBadRequest)
-			return
-		}
-		userUUID, err := auth.ValidateJWT(jwt, cfg.TokenSecret)
-		if err != nil {
-			Error(res, "failed to validate access jwt", http.StatusUnauthorized)
-			return
-		}
 		videos, err := cfg.DB.GetVideosByUser(context.Background(), userUUID.String())
 		if err != nil {
 			Error(res, "failed to get videos", http.StatusInternalServerError)
@@ -122,18 +92,8 @@ func GetAllVideosHandler(cfg *Config) http.HandlerFunc {
 	}
 }
 
-func DeleteVideoHandler(cfg *Config) http.HandlerFunc {
+func DeleteVideoHandler(cfg *Config, userUUID uuid.UUID) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		token, err := auth.GetBearerToken(req.Header)
-		if err != nil {
-			Error(res, "failed to extract token", http.StatusBadRequest)
-			return
-		}
-		userUUID, err := auth.ValidateJWT(token, cfg.TokenSecret)
-		if err != nil {
-			Error(res, "failed to authorize request", http.StatusUnauthorized)
-			return
-		}
 		deleteParams := database.DeleteVideoParams{
 			ID:     req.PathValue("videoID"),
 			UserID: userUUID.String(),
@@ -146,19 +106,9 @@ func DeleteVideoHandler(cfg *Config) http.HandlerFunc {
 	}
 }
 
-func UploadThumbnailHandler(cfg *Config) http.HandlerFunc {
+func UploadThumbnailHandler(cfg *Config, userUUID uuid.UUID) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		videoUUID := req.PathValue("videoID")
-		token, err := auth.GetBearerToken(req.Header)
-		if err != nil {
-			Error(res, "failed to extract token", http.StatusUnauthorized)
-			return
-		}
-		_, err = auth.ValidateJWT(token, cfg.TokenSecret)
-		if err != nil {
-			Error(res, "failed to authorize request", http.StatusUnauthorized)
-			return
-		}
 		const maxMemory = 10 << 20
 		req.ParseMultipartForm(maxMemory)
 
@@ -213,18 +163,8 @@ func UploadThumbnailHandler(cfg *Config) http.HandlerFunc {
 	}
 }
 
-func UploadVideosHandler(cfg *Config) http.HandlerFunc {
+func UploadVideosHandler(cfg *Config, userUUID uuid.UUID) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		token, err := auth.GetBearerToken(req.Header)
-		if err != nil {
-			Error(res, "failed to extract token", http.StatusUnauthorized)
-			return
-		}
-		userUUID, err := auth.ValidateJWT(token, cfg.TokenSecret)
-		if err != nil {
-			Error(res, "failed to authorize request", http.StatusUnauthorized)
-			return
-		}
 		const uploadLimit = 1 << 30
 		req.Body = http.MaxBytesReader(res, req.Body, uploadLimit)
 		req.ParseMultipartForm(uploadLimit)
