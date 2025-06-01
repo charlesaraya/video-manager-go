@@ -31,7 +31,7 @@ func main() {
 	mux.HandleFunc("POST /api/revoke", api.RevokeTokenHandler(cfg))
 
 	mux.HandleFunc("GET /api/videos", api.AuthMiddleware(cfg, api.GetAllVideosHandler))
-	mux.HandleFunc("GET /api/videos/{videoID}", api.AuthMiddleware(cfg, api.GetVideoHandler))
+	mux.HandleFunc("GET /api/videos/{videoID}", api.GetVideoHandler(cfg))
 	mux.HandleFunc("POST /api/videos", api.AuthMiddleware(cfg, api.AddVideoHandler))
 	mux.HandleFunc("DELETE /api/videos/{videoID}", api.AuthMiddleware(cfg, api.DeleteVideoHandler))
 	mux.HandleFunc("UPDATE /api/videos/{videoID}", api.AuthMiddleware(cfg, api.UploadThumbnailHandler))

@@ -46,9 +46,8 @@ func AddVideoHandler(cfg *Config, userUUID uuid.UUID) http.HandlerFunc {
 	}
 }
 
-func GetVideoHandler(cfg *Config, userUUID uuid.UUID) http.HandlerFunc {
+func GetVideoHandler(cfg *Config) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		fmt.Printf("UserUUID: %s", userUUID)
 		videoUUID, err := uuid.Parse(req.PathValue("videoID"))
 		if err != nil {
 			Error(res, "failed to parse video ID", http.StatusInternalServerError)
