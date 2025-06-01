@@ -93,8 +93,18 @@ func GetAllVideosHandler(cfg *Config, userUUID uuid.UUID) http.HandlerFunc {
 
 func DeleteVideoHandler(cfg *Config, userUUID uuid.UUID) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
+		videoUUID := req.PathValue("videoID")
+		video, err := cfg.DB.GetVideo(context.Background(), videoUUID)
+		if err != nil {
+			Error(res, "failed to get video", http.StatusNotFound)
+			return
+		}
+		if video.UserID != userUUID.String() {
+			Error(res, "failed to delete video", http.StatusUnauthorized)
+			return
+		}
 		deleteParams := database.DeleteVideoParams{
-			ID:     req.PathValue("videoID"),
+			ID:     videoUUID,
 			UserID: userUUID.String(),
 		}
 		if err := cfg.DB.DeleteVideo(context.Background(), deleteParams); err != nil {
